@@ -70,32 +70,22 @@
       color: #ff5555;
     }
 
-    body.light .countdown {
-      color: #ff5555;
-    }
-
     .time,
     .countdown {
       font-family: 'DigitalClock', monospace;
       letter-spacing: 0.08em;
       font-variant-numeric: tabular-nums;
+      color: #ff0000;
     }
 
     body.dark .time {
       color: #0399e4;
     }
 
-    body.dark .countdown {
-      color: #ff5555;
-    }
-
     body.light .time {
       color: #ff0000;
     }
-
-    body.light .countdown {
-      color: #aa0000;
-    }
+  
 
     body.dark .date {
       color: #999;
@@ -115,6 +105,50 @@
       margin-right: 5px;
       margin-left: 20px;
     }
+
+    .time-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .ampm-stack {
+      display: flex;
+      flex-direction: column;
+      margin-left: 10px;
+      font-size: 2.5vw;
+      font-family: 'DigitalClock';
+    }
+
+    .ampm-stack span {
+      opacity: 0.25;
+      transition: opacity 0.3s, color 0.3s;
+      color: #999;
+    }
+
+    body.dark .ampm-stack .active-am {
+      opacity: 1;
+      color: #0399e4;
+    }
+
+    body.light .ampm-stack .active-am {
+      opacity: 1;
+      color: #ff0000;
+    }
+
+    body.dark .ampm-stack .active-pm {
+      opacity: 1;
+      color: #0399e4;
+    }
+
+    body.light .ampm-stack .active-pm {
+      opacity: 1;
+      color: #ff0000;
+    }
+
+    .ampm-hidden {
+      display: none;
+    }
+
 
     .countdown {
       font-size: 15vw;
@@ -144,7 +178,6 @@
       color: #ffffff;
     }
 
-    /* Toggle buttons */
     .toggle-container {
       display: flex;
       gap: 10px;
@@ -172,17 +205,14 @@
 
     .toggle-btn .hover-text {
       display: none;
-      /* hidden by default */
       position: absolute;
       top: -30px;
-      /* adjust as needed */
       font-size: 0.9rem;
       color: #007bff;
     }
 
     .toggle-btn:hover .hover-text {
       display: block;
-      /* show on hover */
     }
 
     .toggle-btn:hover {
@@ -190,7 +220,6 @@
     }
 
 
-    /* Active theme colors */
     body.dark .toggle-btn {
       background-color: #343a40;
       color: #fff;
@@ -203,7 +232,6 @@
       border-color: #ccc;
     }
 
-    /* Icon spacing for time format button */
     #timeFormatBtn i {
       margin-right: 5px;
     }
@@ -253,7 +281,7 @@
         <div class="frame-side">
           <div class="frame">
             <div class="time" id="utcTime">--:--:--</div>
-            <div class="utcDate" id="utcDate">-- --, ----</div>
+            <div class="utcDate" id="utcDate">-- -- ----</div>
           </div>
         </div>
       </div>
@@ -264,14 +292,18 @@
       <div class="utc-container">
         <div class="frame-side">
           <div class="frame">
-            <div class="time" id="phTime">--:--:--</div>
-            <div class="date" id="phDate">-- --, ----</div>
+            <div class="time-container">
+              <div class="time" id="phTime">--:--:--</div>
+              <div class="ampm-stack">
+                <span id="amLabel">AM</span>
+                <span id="pmLabel">PM</span>
+              </div>
+            </div>
+            <div class="date" id="phDate">-- -- ----</div>
           </div>
         </div>
       </div>
     </div>
-
-
 
     <div>
       <div class="label">COUNTDOWN TO SHIFT END</div>
@@ -286,7 +318,7 @@
     <p style="text-align: end;">by JPSM</p>
   </div>
 
-  <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3" preload="auto"></audio>
+  <audio id="alarmSound" src="public/audio/tuturu_1.mp3" preload="auto"></audio>
 
   <script>
     let alarmPlayed = false;
@@ -294,6 +326,7 @@
     let perfBase = 0;
     let lastSecond = -1;
     let is24Hour = false;
+    let audioUnlocked = false;
 
     /* ===== Sync Time ===== */
     async function syncTime() {
@@ -310,6 +343,25 @@
         console.log("Time sync failed");
       }
     }
+
+    /* ===== Alarm Interact ===== */
+    const alarmSound = document.getElementById("alarmSound");
+
+    function unlockAudio() {
+      if (!audioUnlocked) {
+        alarmSound.play().then(() => {
+          alarmSound.pause();
+          alarmSound.currentTime = 0;
+          audioUnlocked = true;
+          console.log("Audio unlocked");
+        }).catch(() => { });
+      }
+      document.removeEventListener("click", unlockAudio);
+      document.removeEventListener("keydown", unlockAudio);
+    }
+
+    document.addEventListener("click", unlockAudio);
+    document.addEventListener("keydown", unlockAudio);
 
     /* ===== Render Clock ===== */
     function render() {
@@ -343,16 +395,29 @@
       let phMinutes = String(ph.getMinutes()).padStart(2, "0");
       let phSeconds = String(ph.getSeconds()).padStart(2, "0");
 
-      let phTimeStr;
-      if (is24Hour) {
-        phTimeStr = `${String(phHours).padStart(2, "0")}:${phMinutes}:${phSeconds}`;
-      } else {
-        const ampm = phHours >= 12 ? "PM" : "AM";
-        phHours = phHours % 12 || 12;
-        phTimeStr = `${String(phHours).padStart(2, "0")}:${phMinutes}:${phSeconds} <span class="ampm">${ampm}</span>`;
-      }
+      const isPM = phHours >= 12;
+      let displayHours = is24Hour ? phHours : (phHours % 12 || 12);
 
-      document.getElementById("phTime").innerHTML = phTimeStr;
+      document.getElementById("phTime").textContent =
+        `${String(displayHours).padStart(2, "0")}:${phMinutes}:${phSeconds}`;
+
+      const amLabel = document.getElementById("amLabel");
+      const pmLabel = document.getElementById("pmLabel");
+      const ampmStack = document.querySelector(".ampm-stack");
+
+      amLabel.classList.remove("active-am");
+      pmLabel.classList.remove("active-pm");
+
+      if (is24Hour) {
+        ampmStack.classList.add("ampm-hidden");
+      } else {
+        ampmStack.classList.remove("ampm-hidden");
+        if (isPM) {
+          pmLabel.classList.add("active-pm");
+        } else {
+          amLabel.classList.add("active-am");
+        }
+      }
 
       // UTC
       const utc = new Date(ph.getTime() - 8 * 3600000);

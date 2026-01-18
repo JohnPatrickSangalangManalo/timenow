@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Shift Monitoring Timer (Digital Clock) PV</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <style>
+    /* ===== DIGITAL CLOCK FONT ===== */
+    @font-face {
+      font-family: 'DigitalClock';
+      src: url('The Led Display St.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background: #111;
+      color: #fff;
+    }
+
+    body.light {
+      background: #f0f0f0;
+      color: #000;
+    }
+
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Labels */
+    body.dark .label {
+      color: #ccc;
+    }
+
+    body.dark .utcDate {
+      color: #999;
+    }
+
+    body.light .label {
+      color: #333;
+    }
+
+    body.light .utcDate {
+      color: #ff5555;
+    }
+
+    body.light .countdown {
+      color: #ff5555;
+    }
+
+    .time,
+    .countdown {
+      font-family: 'DigitalClock', monospace;
+      letter-spacing: 0.08em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    body.dark .time {
+      color: #0399e4;
+    }
+
+    body.dark .countdown {
+      color: #ff5555;
+    }
+
+    body.light .time {
+      color: #ff0000;
+    }
+
+    body.light .countdown {
+      color: #aa0000;
+    }
+
+    body.dark .date {
+      color: #999;
+    }
+
+    .shift {
+      font-size: 8vw;
+      font-weight: 800;
+    }
+
+    .label {
+      font-size: 4vw;
+    }
+
+    .time {
+      font-size: 10vw;
+      margin-right: 5px;
+      margin-left: 20px;
+    }
+
+    .countdown {
+      font-size: 15vw;
+      margin-right: 5px;
+      margin-left: 20px;
+    }
+
+    .date {
+      font-size: 2vw;
+      font-family: 'DigitalClock';
+      font-weight: normal;
+      font-style: normal;
+      color: #ff5555;
+    }
+
+    .utc-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .utcDate {
+      font-size: 2vw;
+      font-family: 'DigitalClock';
+      font-weight: normal;
+      font-style: normal;
+      color: #ffffff;
+    }
+
+    /* Toggle buttons */
+    .toggle-container {
+      display: flex;
+      gap: 10px;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      height: 50px;
+      font-size: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: #f8f9fa;
+      color: #000;
+    }
+
+    .toggle-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Active theme colors */
+    body.dark .toggle-btn {
+      background-color: #343a40;
+      color: #fff;
+      border-color: #343a40;
+    }
+
+    body.light .toggle-btn {
+      background-color: #f8f9fa;
+      color: #000;
+      border-color: #ccc;
+    }
+
+    /* Icon spacing for time format button */
+    #timeFormatBtn i {
+      margin-right: 5px;
+    }
+
+    .ampm {
+      font-size: 0.5em;
+      vertical-align: super;
+    }
+
+    .frame {
+      background-color: #000;
+      align-items: center;
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .frame-side {
+      background-color: #cbcbcb;
+      border-radius: 12px;
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body class="light">
+
+  <div class="toggle-container">
+    <button class="toggle-btn" id="toggleBtn">
+      <i class="bi bi-moon-fill"></i>
+    </button>
+
+    <button class="toggle-btn" id="timeFormatBtn">
+      <i class="bi bi-clock"></i> <p style="font-size: x-small;">12H</p>
+    </button>
+  </div>
+
+  <div class="screen">
+    <div class="shift" id="shiftName">SYNCING...</div>
+    
+    <div style="width:100%; max-width:1000px;">
+      <div class="label">UTC (Coordinated Universal Time)</div>
+      <div class="utc-container">
+        <div class="frame-side">
+          <div class="frame">
+            <div class="time" id="utcTime">--:--:--</div>
+            <div class="utcDate" id="utcDate">-- --, ----</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="label">PHT (Philippine Time)</div>
+      <div class="utc-container">
+        <div class="frame-side">
+          <div class="frame">
+            <div class="time" id="phTime">--:--:--</div>
+            <div class="date" id="phDate">-- --, ----</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+   
+
+    <div>
+      <div class="label">COUNTDOWN TO SHIFT END</div>
+      <div class="utc-container">
+        <div class="frame-side">
+          <div class="frame">
+            <div class="countdown" id="countdown">--:--:--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align: end;">by JPSM</p>
+  </div>
+
+  <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3" preload="auto"></audio>
+
+  <script>
+    let alarmPlayed = false;
+    let serverEpoch = 0;
+    let perfBase = 0;
+    let lastSecond = -1;
+    let is24Hour = false;
+
+    /* ===== Sync Time ===== */
+    async function syncTime() {
+      try {
+        const t0 = performance.now();
+        const res = await fetch("https://worldtimeapi.org/api/timezone/Asia/Manila");
+        const data = await res.json();
+        const t1 = performance.now();
+
+        const latency = (t1 - t0) / 2;
+        serverEpoch = new Date(data.datetime).getTime() + latency;
+        perfBase = performance.now();
+      } catch {
+        console.log("Time sync failed");
+      }
+    }
+
+    /* ===== Render Clock ===== */
+    function render() {
+      if (!serverEpoch) {
+        requestAnimationFrame(render);
+        return;
+      }
+
+      const now = new Date(serverEpoch + (performance.now() - perfBase));
+      const sec = now.getSeconds();
+
+      if (sec !== lastSecond) {
+        updateDisplay(now);
+        lastSecond = sec;
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    function updateDisplay(ph) {
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      document.getElementById("phDate").textContent =
+        `${months[ph.getMonth()]} ${ph.getDate()}, ${ph.getFullYear()}`;
+
+      // PH TIME formatting
+      let phHours = ph.getHours();
+      let phMinutes = String(ph.getMinutes()).padStart(2, "0");
+      let phSeconds = String(ph.getSeconds()).padStart(2, "0");
+
+      let phTimeStr;
+      if (is24Hour) {
+        phTimeStr = `${String(phHours).padStart(2, "0")}:${phMinutes}:${phSeconds}`;
+      } else {
+        const ampm = phHours >= 12 ? "PM" : "AM";
+        phHours = phHours % 12 || 12;
+        phTimeStr = `${String(phHours).padStart(2, "0")}:${phMinutes}:${phSeconds} <span class="ampm">${ampm}</span>`;
+      }
+
+      document.getElementById("phTime").innerHTML = phTimeStr;
+
+      // UTC
+      const utc = new Date(ph.getTime() - 8 * 3600000);
+      document.getElementById("utcTime").textContent =
+        utc.toTimeString().substring(0, 8);
+      document.getElementById("utcDate").textContent =
+        `${months[utc.getMonth()]} ${utc.getDate()}, ${utc.getFullYear()}`;
+
+      // SHIFT & countdown
+      const h = ph.getHours();
+      const m = ph.getMinutes();
+      let shift, end = new Date(ph);
+
+      if ((h > 8 || (h === 8 && m >= 30)) && (h < 16 || (h === 16 && m < 30))) {
+        shift = "DAY SHIFT";
+        end.setHours(16, 30, 0, 0);
+      } else {
+        shift = "NIGHT SHIFT";
+        if (h > 16 || (h === 16 && m >= 30)) end.setDate(end.getDate() + 1);
+        end.setHours(8, 30, 0, 0);
+      }
+
+      document.getElementById("shiftName").textContent = shift;
+
+      let diff = end - ph;
+      if (diff < 0) diff = 0;
+
+      const s = Math.floor(diff / 1000);
+      const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+      const ss = String(s % 60).padStart(2, "0");
+
+      document.getElementById("countdown").textContent =
+        `${hh}:${mm}:${ss}`;
+
+      if (s === 0 && !alarmPlayed) {
+        document.getElementById("alarmSound").play();
+        alarmPlayed = true;
+      }
+      if (s > 0) alarmPlayed = false;
+    }
+
+    /* ===== Start ===== */
+    syncTime();
+    setInterval(syncTime, 300000);
+    requestAnimationFrame(render);
+
+    /* ===== Theme Toggle ===== */
+    const toggleBtn = document.getElementById("toggleBtn");
+    toggleBtn.onclick = () => {
+      const icon = toggleBtn.querySelector("i");
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+
+      if (document.body.classList.contains("dark")) {
+        icon.classList.remove("bi-moon-fill");
+        icon.classList.add("bi-sun-fill");
+      } else {
+        icon.classList.remove("bi-sun-fill");
+        icon.classList.add("bi-moon-fill");
+      }
+    };
+
+    /* ===== 24H/12H Toggle ===== */
+    const timeFormatBtn = document.getElementById("timeFormatBtn");
+    timeFormatBtn.onclick = () => {
+      is24Hour = !is24Hour;
+      timeFormatBtn.innerHTML = `<i class="bi bi-clock"></i> <span style="font-size: x-small;">${is24Hour ? "24H" : "12H"}</span>`;
+      updateDisplay(new Date(serverEpoch + (performance.now() - perfBase)));
+    };
+  </script>
+
+</body>
+
+</html>

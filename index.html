@@ -158,20 +158,37 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 70px;
+      width: 120px;
       height: 50px;
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       border-radius: 12px;
       border: 1px solid #ccc;
       cursor: pointer;
       transition: all 0.3s ease;
       background-color: #f8f9fa;
       color: #000;
+      position: relative;
+    }
+
+    .toggle-btn .hover-text {
+      display: none;
+      /* hidden by default */
+      position: absolute;
+      top: -30px;
+      /* adjust as needed */
+      font-size: 0.9rem;
+      color: #007bff;
+    }
+
+    .toggle-btn:hover .hover-text {
+      display: block;
+      /* show on hover */
     }
 
     .toggle-btn:hover {
       transform: scale(1.05);
     }
+
 
     /* Active theme colors */
     body.dark .toggle-btn {
@@ -222,14 +239,15 @@
     </button>
 
     <button class="toggle-btn" id="timeFormatBtn">
-      <i class="bi bi-clock"></i> <p style="font-size: x-small;">12H</p>
+      <i class="bi bi-clock"></i>
+      <p style="font-size: x-small;">12H</p>
     </button>
   </div>
 
   <div class="screen">
     <div class="shift" id="shiftName">SYNCING...</div>
-    
-    <div style="width:100%; max-width:1000px;">
+
+    <div>
       <div class="label">UTC (Coordinated Universal Time)</div>
       <div class="utc-container">
         <div class="frame-side">
@@ -240,7 +258,8 @@
         </div>
       </div>
     </div>
-    <div style="width:100%; max-width:1000px;">
+
+    <div>
       <div class="label">PHT (Philippine Time)</div>
       <div class="utc-container">
         <div class="frame-side">
@@ -252,7 +271,7 @@
       </div>
     </div>
 
-   
+
 
     <div>
       <div class="label">COUNTDOWN TO SHIFT END</div>
